@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>A & D Unisex Salon - Booking</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}
+    header{background:#2c3e50;color:#fff;padding:20px;text-align:center;}
+    .container{max-width:900px;margin:auto;padding:20px;}
+    .card{background:#fff;padding:20px;margin:15px 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);}
+    label{display:block;margin:10px 0 5px;}
+    input{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;}
+    button{margin-top:10px;padding:10px 15px;background:#27ae60;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+    button:hover{background:#219150;}
+    table{width:100%;border-collapse:collapse;margin-top:15px;}
+    th,td{border:1px solid #ddd;padding:8px;text-align:center;}
+    th{background:#2980b9;color:#fff;}
+    select{padding:5px;border-radius:4px;}
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <header>
+    <h1>A & D Unisex Salon</h1>
+    <p>Stylists: Ankush Padvi & Shakshi Jadhav</p>
+    <p>📞 8329003586 | ✉️ ankushpadvi555@gmail.com</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Customer Booking -->
+    <div class="card">
+      <h2>Customer Booking</h2>
+      <label>Name</label>
+      <input id="custName" placeholder="Enter your name"/>
+      <label>Contact</label>
+      <input id="custPhone" placeholder="Enter your phone"/>
+      <p>Booking Fee: ₹50 (Will be adjusted in final bill)</p>
+      <a href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">
+        <button>Pay ₹50 via UPI</button>
+      </a>
+      <label>Upload Payment Screenshot</label>
+      <input type="file" id="payScreenshot"/>
+      <button onclick="bookSlot()">Submit Booking</button>
+      <p id="msg"></p>
+    </div>
+
+    <!-- Staff Queue Table -->
+    <div class="card">
+      <h2>Today’s Queue</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Serial</th>
+            <th>Date & Time</th>
+            <th>Name</th>
+            <th>Contact</th>
+            <th>Payment</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="queueTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+<script>
+  // ---- Your Firebase Config ----
+  const firebaseConfig = {
+    apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
+    authDomain: "and-unisex-salon.firebaseapp.com",
+    databaseURL: "https://and-unisex-salon-default-rtdb.firebaseio.com",
+    projectId: "and-unisex-salon",
+    storageBucket: "and-unisex-salon.appspot.com",
+    messagingSenderId: "369436182781",
+    appId: "1:369436182781:web:893b3b8db919b89bb59694",
+    measurementId: "G-F9GDHMDZYG"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const storage = firebase.storage();
+
+  // Generate next serial
+  async function getNextSerial(date){
+    const snap = await db.ref("bookings/"+date).once("value");
+    const count = snap.numChildren();
+    return String(count+1).padStart(3,'0'); // 001,002,...
+  }
+
+  // Book Slot
+  async function bookSlot(){
+    const name=document.getElementById("custName").value.trim();
+    const phone=document.getElementById("custPhone").value.trim();
+    const file=document.getElementById("payScreenshot").files[0];
+    if(!name||!phone||!file){document.getElementById("msg").innerText="⚠️ Fill all fields";return;}
+    const date=new Date();
+    const dateStr=date.toISOString().split("T")[0];
+    const timeStr=date.toLocaleTimeString();
+    const serial=await getNextSerial(dateStr);
+
+    // Upload screenshot
+    const ref=storage.ref("payments/"+dateStr+"_"+serial+"_"+file.name);
+    await ref.put(file);
+    const url=await ref.getDownloadURL();
+
+    const entry={
+      serial:serial,
+      datetime:dateStr+" "+timeStr,
+      name:name,
+      contact:phone,
+      paymentStatus:"Pending",
+      serviceStatus:"Waiting",
+      screenshotURL:url
+    };
+    db.ref("bookings/"+dateStr+"/"+serial).set(entry).then(()=>{
+      document.getElementById("msg").innerText="✅ Booking Done! Your Serial: "+serial;
+      document.getElementById("custName").value="";
+      document.getElementById("custPhone").value="";
+      document.getElementById("payScreenshot").value="";
+    });
+  }
+
+  // Display Queue
+  const today=new Date().toISOString().split("T")[0];
+  db.ref("bookings/"+today).on("value",snap=>{
+    const data=snap.val()||{};
+    const tbody=document.getElementById("queueTable");
+    tbody.innerHTML="";
+    Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial)).forEach(item=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${item.serial}</td>
+        <td>${item.datetime}</td>
+        <td>${item.name}</td>
+        <td>${item.contact}</td>
+        <td>
+          <select onchange="updateField('${today}','${item.serial}','paymentStatus',this.value)">
+            <option ${item.paymentStatus=="Pending"?"selected":""}>Pending</option>
+            <option ${item.paymentStatus=="Done"?"selected":""}>Done</option>
+          </select>
+        </td>
+        <td>
+          <select onchange="updateField('${today}','${item.serial}','serviceStatus',this.value)">
+            <option ${item.serviceStatus=="Waiting"?"selected":""}>Waiting</option>
+            <option ${item.serviceStatus=="Serving"?"selected":""}>Serving</option>
+            <option ${item.serviceStatus=="Done"?"selected":""}>Done</option>
+          </select>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+
+  // Staff updates field
+  function updateField(date,serial,field,val){
+    db.ref("bookings/"+date+"/"+serial+"/"+field).set(val);
+  }
+</script>
+</body>
+</html>
