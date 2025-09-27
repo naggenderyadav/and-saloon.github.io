@@ -1,120 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>A & D Unisex Salon - Booking</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>A & D Unisex Salon - Book</title>
   <style>
-    /* Global */
-    body{margin:0;font-family:'Segoe UI',sans-serif;background:#f9f9f9;color:#333;}
-    h1,h2,h3{margin:0;font-weight:600;}
-    a{text-decoration:none;color:inherit;}
-
-    /* Header / Hero */
-    header{
-      background:linear-gradient(135deg,#1f3b73,#2c3e50);
-      color:#fff;padding:40px 20px;text-align:center;
+    :root{
+      --bg:#f6f7fb; --deep:#1f3b73; --accent:#d4af37; --card:#ffffff;
+      --muted:#6b7280;
     }
-    header h1{font-size:2.2rem;}
-    header p{opacity:0.9;font-size:1rem;}
-
-    /* Container */
-    .container{max-width:1000px;margin:auto;padding:20px;}
-
-    /* Card */
-    .card{
-      background:#fff;padding:25px;margin:20px 0;border-radius:12px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.1);
-      transition:transform .2s;
-    }
-    .card:hover{transform:translateY(-3px);}
-
-    /* Form */
-    label{display:block;margin:12px 0 6px;font-weight:500;}
-    input{
-      width:100%;padding:12px;border:1px solid #ccc;
-      border-radius:6px;font-size:1rem;
-    }
-    button{
-      margin-top:15px;padding:12px 18px;font-size:1rem;
-      background:#d4af37;color:#fff;border:none;border-radius:6px;
-      cursor:pointer;transition:background .2s;
-    }
-    button:hover{background:#b9962d;}
-
-    /* Table */
-    table{width:100%;border-collapse:collapse;margin-top:15px;font-size:0.95rem;}
-    th,td{border:1px solid #eee;padding:10px;text-align:center;}
-    th{background:#2c3e50;color:#fff;}
-    tr:nth-child(even){background:#fafafa;}
-
-    select{padding:6px;border-radius:4px;border:1px solid #ccc;}
-
-    /* Message */
-    #msg{margin-top:12px;font-weight:bold;}
-
-    /* Footer */
-    footer{
-      background:#2c3e50;color:#fff;text-align:center;
-      padding:15px;margin-top:40px;font-size:0.9rem;
-    }
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#13253a;}
+    header{background:linear-gradient(135deg,var(--deep),#2c3e50);color:#fff;padding:40px 20px;text-align:center;}
+    header h1{font-size:1.8rem;margin-bottom:6px}
+    header p{margin:0;opacity:0.95}
+    .container{max-width:980px;margin:24px auto;padding:0 16px}
+    .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(20,30,50,0.08);margin-bottom:18px}
+    label{display:block;margin:12px 0 6px;font-weight:600}
+    input{width:100%;padding:12px;border-radius:8px;border:1px solid #e6e9ef;font-size:1rem}
+    .row{display:flex;gap:12px}
+    .small{flex:1}
+    .actions{display:flex;gap:12px;margin-top:14px}
+    .btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:#fff;color:var(--deep);border:1px solid #e6e9ef}
+    .msg{margin-top:12px;font-weight:700}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:10px;border:1px solid #eef2f7;text-align:center;font-size:0.95rem}
+    th{background:var(--deep);color:#fff}
+    footer{text-align:center;padding:18px;color:#fff;background:#25364d;border-top:1px solid rgba(255,255,255,0.03)}
+    @media(max-width:640px){header h1{font-size:1.4rem}}
   </style>
-
-  <!-- Firebase SDKs -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <!-- Hero -->
   <header>
     <h1>✨ A & D Unisex Salon ✨</h1>
-    <p>Experience Luxury Styling with Ankush Padvi & Shakshi Jadhav</p>
+    <p>Experience Luxury Styling — Ankush Padvi & Shakshi Jadhav</p>
     <p>📞 8329003586 | ✉️ ankushpadvi555@gmail.com</p>
   </header>
 
   <div class="container">
+    <!-- Booking card -->
+    <div class="card" aria-labelledby="book-title">
+      <h2 id="book-title">📌 Book Your Slot</h2>
+      <label for="custName">Name</label>
+      <input id="custName" placeholder="Enter your name" />
+      <label for="custPhone">Contact</label>
+      <input id="custPhone" placeholder="Enter your phone (10 digits)" />
+      <p style="margin-top:12px;color:var(--muted)">Booking Fee: <strong>₹50</strong> (adjustable in final bill)</p>
 
-    <!-- Booking -->
-    <div class="card">
-      <h2>📌 Book Your Slot</h2>
-      <label>Name</label>
-      <input id="custName" placeholder="Enter your name"/>
-      <label>Contact</label>
-      <input id="custPhone" placeholder="Enter your phone"/>
-      <p style="margin-top:10px;">Booking Fee: <b>₹50</b> (adjustable in final bill)</p>
-      <a href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">
-        <button type="button">💳 Pay ₹50 via UPI</button>
-      </a>
-      <button type="button" onclick="bookSlot()">📅 Confirm Booking</button>
-      <p id="msg"></p>
+      <div class="actions">
+        <!-- UPI link opens UPI apps on mobile -->
+        <a id="upiLink" class="btn" href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">💳 Pay ₹50 via UPI</a>
+        <button class="btn ghost" id="confirmBtn">📅 Confirm Booking</button>
+      </div>
+
+      <p id="msg" class="msg" role="status" aria-live="polite"></p>
     </div>
 
-    <!-- Queue -->
+    <!-- Queue preview (read-only) -->
     <div class="card">
-      <h2>📋 Today’s Queue</h2>
-      <table>
+      <h3>📋 Today’s Queue (Preview)</h3>
+      <table aria-label="Today queue">
         <thead>
-          <tr>
-            <th>Serial</th>
-            <th>Date & Time</th>
-            <th>Name</th>
-            <th>Contact</th>
-            <th>Payment</th>
-            <th>Status</th>
-          </tr>
+          <tr><th>Serial</th><th>Date & Time</th><th>Name</th><th>Contact</th><th>Payment</th><th>Status</th></tr>
         </thead>
-        <tbody id="queueTable"></tbody>
+        <tbody id="queueTable">
+          <tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>
+        </tbody>
       </table>
+      <p style="margin-top:10px;color:var(--muted);font-size:0.9rem">Note: To manage status (payment/service), staff should use the staff panel (not available to public).</p>
     </div>
-
   </div>
 
-  <footer>
-    © 2025 A & D Unisex Salon | Designed with ❤️ for our valued clients
-  </footer>
+  <footer>© 2025 A & D Unisex Salon</footer>
 
 <script>
-  // ---- Firebase Config ----
+  // ---------- Firebase config (replace if needed) ----------
   const firebaseConfig = {
     apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
     authDomain: "and-unisex-salon.firebaseapp.com",
@@ -122,26 +85,83 @@
     projectId: "and-unisex-salon",
     storageBucket: "and-unisex-salon.appspot.com",
     messagingSenderId: "369436182781",
-    appId: "1:369436182781:web:893b3b8db919b89bb59694",
-    measurementId: "G-F9GDHMDZYG"
+    appId: "1:369436182781:web:893b3b8db919b89bb59694"
   };
-
-  // Init
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Generate Serial
+  // Utils
+  function setMsg(text,color='black'){ const el=document.getElementById('msg'); el.textContent=text; el.style.color=color; }
+
   async function getNextSerial(date){
-    const snap = await db.ref("bookings/"+date).once("value");
-    const count = snap.numChildren();
-    return String(count+1).padStart(3,'0');
+    try{
+      const snap = await db.ref("bookings/"+date).once("value");
+      const count = snap.exists()? snap.numChildren(): 0;
+      return String(count+1).padStart(3,'0');
+    }catch(e){
+      console.error('serial error',e); return '001';
+    }
   }
 
-  // Booking
-  async function bookSlot(){
-    const name=document.getElementById("custName").value.trim();
-    const phone=document.getElementById("custPhone").value.trim();
-    const msg=document.getElementById("msg");
+  // Confirm booking handler
+  document.getElementById('confirmBtn').addEventListener('click', async function(){
+    setMsg('','black');
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+
+    if(!name || !phone){ setMsg('⚠️ Please fill all fields', 'crimson'); return; }
+    if(!/^\d{10}$/.test(phone)){ setMsg('⚠️ Enter a valid 10-digit phone number', 'crimson'); return; }
+
+    try{
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toLocaleTimeString();
+      const serial = await getNextSerial(dateStr);
+
+      const entry = {
+        serial,
+        datetime: dateStr + ' ' + timeStr,
+        name,
+        contact: phone,
+        paymentStatus: 'Pending',
+        serviceStatus: 'Waiting'
+      };
+      await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
+      setMsg('✅ Booking Confirmed! Your Serial: '+serial, 'green');
+      // reset fields
+      document.getElementById('custName').value='';
+      document.getElementById('custPhone').value='';
+    }catch(err){
+      console.error(err);
+      setMsg('❌ Something went wrong. Try again later.', 'crimson');
+    }
+  });
+
+  // Read-only queue preview (safe: shows only)
+  (function loadTodayQueue(){
+    const today = new Date().toISOString().split('T')[0];
+    const ref = db.ref("bookings/"+today);
+    ref.on('value', snap=>{
+      const tbody = document.getElementById('queueTable'); tbody.innerHTML='';
+      if(!snap.exists()){ tbody.innerHTML = '<tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>'; return; }
+      const data = snap.val();
+      // sort by serial
+      const rows = Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial));
+      rows.forEach(item=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.serial}</td>
+                        <td>${item.datetime}</td>
+                        <td>${item.name}</td>
+                        <td>${item.contact}</td>
+                        <td>${item.paymentStatus}</td>
+                        <td>${item.serviceStatus}</td>`;
+        tbody.appendChild(tr);
+      });
+    }, err => { console.error('queue load err', err); });
+  })();
+</script>
+</body>
+</html>    const msg=document.getElementById("msg");
 
     if(!name||!phone){
       msg.innerText="⚠️ Please fill all fields";
