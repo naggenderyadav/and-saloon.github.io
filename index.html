@@ -17,6 +17,7 @@
     th,td{border:1px solid #ddd;padding:8px;text-align:center;}
     th{background:#2980b9;color:#fff;}
     select{padding:5px;border-radius:4px;}
+    #msg{margin-top:10px;font-weight:bold;}
   </style>
 
   <!-- Firebase SDKs -->
@@ -42,11 +43,11 @@
       <input id="custPhone" placeholder="Enter your phone"/>
       <p>Booking Fee: ₹50 (Will be adjusted in final bill)</p>
       <a href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">
-        <button>Pay ₹50 via UPI</button>
+        <button type="button">Pay ₹50 via UPI</button>
       </a>
       <label>Upload Payment Screenshot</label>
       <input type="file" id="payScreenshot"/>
-      <button onclick="bookSlot()">Submit Booking</button>
+      <button type="button" onclick="bookSlot()">Submit Booking</button>
       <p id="msg"></p>
     </div>
 
@@ -82,6 +83,8 @@
     appId: "1:369436182781:web:893b3b8db919b89bb59694",
     measurementId: "G-F9GDHMDZYG"
   };
+
+  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const storage = firebase.storage();
@@ -98,32 +101,49 @@
     const name=document.getElementById("custName").value.trim();
     const phone=document.getElementById("custPhone").value.trim();
     const file=document.getElementById("payScreenshot").files[0];
-    if(!name||!phone||!file){document.getElementById("msg").innerText="⚠️ Fill all fields";return;}
-    const date=new Date();
-    const dateStr=date.toISOString().split("T")[0];
-    const timeStr=date.toLocaleTimeString();
-    const serial=await getNextSerial(dateStr);
+    const msg=document.getElementById("msg");
 
-    // Upload screenshot
-    const ref=storage.ref("payments/"+dateStr+"_"+serial+"_"+file.name);
-    await ref.put(file);
-    const url=await ref.getDownloadURL();
+    if(!name||!phone||!file){
+      msg.innerText="⚠️ Please fill all fields and upload screenshot";
+      msg.style.color="red";
+      return;
+    }
 
-    const entry={
-      serial:serial,
-      datetime:dateStr+" "+timeStr,
-      name:name,
-      contact:phone,
-      paymentStatus:"Pending",
-      serviceStatus:"Waiting",
-      screenshotURL:url
-    };
-    db.ref("bookings/"+dateStr+"/"+serial).set(entry).then(()=>{
-      document.getElementById("msg").innerText="✅ Booking Done! Your Serial: "+serial;
+    try {
+      const date=new Date();
+      const dateStr=date.toISOString().split("T")[0];
+      const timeStr=date.toLocaleTimeString();
+      const serial=await getNextSerial(dateStr);
+
+      // Upload screenshot
+      const storageRef=storage.ref("payments/"+dateStr+"_"+serial+"_"+file.name);
+      await storageRef.put(file);
+      const url=await storageRef.getDownloadURL();
+
+      // Save booking
+      const entry={
+        serial:serial,
+        datetime:dateStr+" "+timeStr,
+        name:name,
+        contact:phone,
+        paymentStatus:"Pending",
+        serviceStatus:"Waiting",
+        screenshotURL:url
+      };
+      await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
+
+      msg.innerText="✅ Booking Done! Your Serial: "+serial;
+      msg.style.color="green";
+
+      // Reset form
       document.getElementById("custName").value="";
       document.getElementById("custPhone").value="";
       document.getElementById("payScreenshot").value="";
-    });
+    } catch(err){
+      console.error(err);
+      msg.innerText="❌ Error: "+err.message;
+      msg.style.color="red";
+    }
   }
 
   // Display Queue
