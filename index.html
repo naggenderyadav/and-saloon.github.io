@@ -5,55 +5,93 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>A & D Unisex Salon - Booking</title>
   <style>
-    body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}
-    header{background:#2c3e50;color:#fff;padding:20px;text-align:center;}
-    .container{max-width:900px;margin:auto;padding:20px;}
-    .card{background:#fff;padding:20px;margin:15px 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);}
-    label{display:block;margin:10px 0 5px;}
-    input{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;}
-    button{margin-top:10px;padding:10px 15px;background:#27ae60;color:#fff;border:none;border-radius:5px;cursor:pointer;}
-    button:hover{background:#219150;}
-    table{width:100%;border-collapse:collapse;margin-top:15px;}
-    th,td{border:1px solid #ddd;padding:8px;text-align:center;}
-    th{background:#2980b9;color:#fff;}
-    select{padding:5px;border-radius:4px;}
-    #msg{margin-top:10px;font-weight:bold;}
+    /* Global */
+    body{margin:0;font-family:'Segoe UI',sans-serif;background:#f9f9f9;color:#333;}
+    h1,h2,h3{margin:0;font-weight:600;}
+    a{text-decoration:none;color:inherit;}
+
+    /* Header / Hero */
+    header{
+      background:linear-gradient(135deg,#1f3b73,#2c3e50);
+      color:#fff;padding:40px 20px;text-align:center;
+    }
+    header h1{font-size:2.2rem;}
+    header p{opacity:0.9;font-size:1rem;}
+
+    /* Container */
+    .container{max-width:1000px;margin:auto;padding:20px;}
+
+    /* Card */
+    .card{
+      background:#fff;padding:25px;margin:20px 0;border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      transition:transform .2s;
+    }
+    .card:hover{transform:translateY(-3px);}
+
+    /* Form */
+    label{display:block;margin:12px 0 6px;font-weight:500;}
+    input{
+      width:100%;padding:12px;border:1px solid #ccc;
+      border-radius:6px;font-size:1rem;
+    }
+    button{
+      margin-top:15px;padding:12px 18px;font-size:1rem;
+      background:#d4af37;color:#fff;border:none;border-radius:6px;
+      cursor:pointer;transition:background .2s;
+    }
+    button:hover{background:#b9962d;}
+
+    /* Table */
+    table{width:100%;border-collapse:collapse;margin-top:15px;font-size:0.95rem;}
+    th,td{border:1px solid #eee;padding:10px;text-align:center;}
+    th{background:#2c3e50;color:#fff;}
+    tr:nth-child(even){background:#fafafa;}
+
+    select{padding:6px;border-radius:4px;border:1px solid #ccc;}
+
+    /* Message */
+    #msg{margin-top:12px;font-weight:bold;}
+
+    /* Footer */
+    footer{
+      background:#2c3e50;color:#fff;text-align:center;
+      padding:15px;margin-top:40px;font-size:0.9rem;
+    }
   </style>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </head>
 <body>
+  <!-- Hero -->
   <header>
-    <h1>A & D Unisex Salon</h1>
-    <p>Stylists: Ankush Padvi & Shakshi Jadhav</p>
+    <h1>✨ A & D Unisex Salon ✨</h1>
+    <p>Experience Luxury Styling with Ankush Padvi & Shakshi Jadhav</p>
     <p>📞 8329003586 | ✉️ ankushpadvi555@gmail.com</p>
   </header>
 
   <div class="container">
 
-    <!-- Customer Booking -->
+    <!-- Booking -->
     <div class="card">
-      <h2>Customer Booking</h2>
+      <h2>📌 Book Your Slot</h2>
       <label>Name</label>
       <input id="custName" placeholder="Enter your name"/>
       <label>Contact</label>
       <input id="custPhone" placeholder="Enter your phone"/>
-      <p>Booking Fee: ₹50 (Will be adjusted in final bill)</p>
+      <p style="margin-top:10px;">Booking Fee: <b>₹50</b> (adjustable in final bill)</p>
       <a href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">
-        <button type="button">Pay ₹50 via UPI</button>
+        <button type="button">💳 Pay ₹50 via UPI</button>
       </a>
-      <label>Upload Payment Screenshot</label>
-      <input type="file" id="payScreenshot"/>
-      <button type="button" onclick="bookSlot()">Submit Booking</button>
+      <button type="button" onclick="bookSlot()">📅 Confirm Booking</button>
       <p id="msg"></p>
     </div>
 
-    <!-- Staff Queue Table -->
+    <!-- Queue -->
     <div class="card">
-      <h2>Today’s Queue</h2>
+      <h2>📋 Today’s Queue</h2>
       <table>
         <thead>
           <tr>
@@ -71,8 +109,12 @@
 
   </div>
 
+  <footer>
+    © 2025 A & D Unisex Salon | Designed with ❤️ for our valued clients
+  </footer>
+
 <script>
-  // ---- Your Firebase Config ----
+  // ---- Firebase Config ----
   const firebaseConfig = {
     apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
     authDomain: "and-unisex-salon.firebaseapp.com",
@@ -84,64 +126,93 @@
     measurementId: "G-F9GDHMDZYG"
   };
 
-  // Initialize Firebase
+  // Init
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  const storage = firebase.storage();
 
-  // Generate next serial
+  // Generate Serial
   async function getNextSerial(date){
     const snap = await db.ref("bookings/"+date).once("value");
     const count = snap.numChildren();
-    return String(count+1).padStart(3,'0'); // 001,002,...
+    return String(count+1).padStart(3,'0');
   }
 
-  // Book Slot
+  // Booking
   async function bookSlot(){
     const name=document.getElementById("custName").value.trim();
     const phone=document.getElementById("custPhone").value.trim();
-    const file=document.getElementById("payScreenshot").files[0];
     const msg=document.getElementById("msg");
 
-    if(!name||!phone||!file){
-      msg.innerText="⚠️ Please fill all fields and upload screenshot";
-      msg.style.color="red";
-      return;
+    if(!name||!phone){
+      msg.innerText="⚠️ Please fill all fields";
+      msg.style.color="red";return;
     }
 
-    try {
+    try{
       const date=new Date();
       const dateStr=date.toISOString().split("T")[0];
       const timeStr=date.toLocaleTimeString();
       const serial=await getNextSerial(dateStr);
 
-      // Upload screenshot
-      const storageRef=storage.ref("payments/"+dateStr+"_"+serial+"_"+file.name);
-      await storageRef.put(file);
-      const url=await storageRef.getDownloadURL();
-
-      // Save booking
       const entry={
         serial:serial,
         datetime:dateStr+" "+timeStr,
         name:name,
         contact:phone,
         paymentStatus:"Pending",
-        serviceStatus:"Waiting",
-        screenshotURL:url
+        serviceStatus:"Waiting"
       };
       await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
 
-      msg.innerText="✅ Booking Done! Your Serial: "+serial;
+      msg.innerText="✅ Booking Confirmed! Your Serial: "+serial;
       msg.style.color="green";
-
-      // Reset form
       document.getElementById("custName").value="";
       document.getElementById("custPhone").value="";
-      document.getElementById("payScreenshot").value="";
-    } catch(err){
+    }catch(err){
       console.error(err);
       msg.innerText="❌ Error: "+err.message;
+      msg.style.color="red";
+    }
+  }
+
+  // Queue
+  const today=new Date().toISOString().split("T")[0];
+  db.ref("bookings/"+today).on("value",snap=>{
+    const data=snap.val()||{};
+    const tbody=document.getElementById("queueTable");
+    tbody.innerHTML="";
+    Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial)).forEach(item=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${item.serial}</td>
+        <td>${item.datetime}</td>
+        <td>${item.name}</td>
+        <td>${item.contact}</td>
+        <td>
+          <select onchange="updateField('${today}','${item.serial}','paymentStatus',this.value)">
+            <option ${item.paymentStatus=="Pending"?"selected":""}>Pending</option>
+            <option ${item.paymentStatus=="Done"?"selected":""}>Done</option>
+          </select>
+        </td>
+        <td>
+          <select onchange="updateField('${today}','${item.serial}','serviceStatus',this.value)">
+            <option ${item.serviceStatus=="Waiting"?"selected":""}>Waiting</option>
+            <option ${item.serviceStatus=="Serving"?"selected":""}>Serving</option>
+            <option ${item.serviceStatus=="Done"?"selected":""}>Done</option>
+          </select>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+
+  // Update field
+  function updateField(date,serial,field,val){
+    db.ref("bookings/"+date+"/"+serial+"/"+field).set(val);
+  }
+</script>
+</body>
+</html>      msg.innerText="❌ Error: "+err.message;
       msg.style.color="red";
     }
   }
