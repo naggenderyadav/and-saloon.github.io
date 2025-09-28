@@ -1,45 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Staff Panel - A & D Salon</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A & D Salon - Admin</title>
   <style>
-    body{font-family:Inter,Arial,sans-serif;margin:0;background:#f4f6f9;color:#14212c}
-    header{background:#1f3b73;color:#fff;padding:18px;text-align:center}
-    .container{max-width:1100px;margin:18px auto;padding:16px}
-    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(20,30,50,0.06)}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{border:1px solid #eef2f7;padding:10px;text-align:center}
-    th{background:#1f3b73;color:#fff}
-    select{padding:8px;border-radius:6px}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between}
-    .logout{background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:6px}
+    body{font-family:Arial,sans-serif;background:#f6f7fb;margin:0;padding:0;}
+    header{background:#1f3b73;color:#fff;text-align:center;padding:20px;}
+    .login,.panel{max-width:420px;margin:40px auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+    label{display:block;margin:10px 0 5px;}
+    input{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;}
+    button{margin-top:12px;width:100%;padding:10px;background:#d4af37;color:#fff;border:none;border-radius:6px;cursor:pointer;}
+    table{width:100%;margin-top:20px;border-collapse:collapse;}
+    th,td{border:1px solid #ddd;padding:10px;text-align:center;}
+    th{background:#1f3b73;color:#fff;}
+    select{padding:4px;}
   </style>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-  <header><h2>Staff Panel — A & D Unisex Salon</h2></header>
-  <div class="container">
-    <div id="mainArea" class="card" style="display:none">
-      <div class="top">
-        <strong>Today's Queue</strong>
-        <div>
-          <button id="logoutBtn" class="logout">Logout</button>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th>Serial</th><th>Date & Time</th><th>Name</th><th>Contact</th><th>Payment</th><th>Status</th></tr></thead>
-        <tbody id="adminQueue"></tbody>
-      </table>
-    </div>
+  <header>
+    <h1>🔑 A & D Salon - Admin Panel</h1>
+  </header>
 
-    <div id="blocked" class="card" style="text-align:center">
-      <p style="font-weight:700">Restricted</p>
-      <p>Staff-only panel. Please login to continue.</p>
-      <button id="loginBtn">Staff Login</button>
-    </div>
+  <!-- Login Box -->
+  <div class="login" id="loginBox">
+    <h3>Staff Login</h3>
+    <label>Email</label>
+    <input type="email" id="loginEmail" placeholder="Enter staff email">
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="Enter password">
+    <button onclick="login()">Login</button>
+    <p id="loginMsg" style="color:red;font-weight:bold;"></p>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="panel" id="adminPanel" style="display:none;">
+    <h3>📋 Manage Today’s Queue</h3>
+    <table>
+      <thead>
+        <tr><th>Serial</th><th>Date & Time</th><th>Name</th><th>Contact</th><th>Payment</th><th>Status</th></tr>
+      </thead>
+      <tbody id="queueTable"></tbody>
+    </table>
+    <button onclick="logout()">Logout</button>
   </div>
 
 <script>
@@ -55,63 +63,68 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth();
 
-  const STAFF_PASSWORD = "staff123"; // change this to something secure
-  const LOGIN_KEY = 'ad_salon_staff_logged';
-
-  function showMain(){ document.getElementById('mainArea').style.display='block'; document.getElementById('blocked').style.display='none'; loadQueue(); }
-  function hideMain(){ document.getElementById('mainArea').style.display='none'; document.getElementById('blocked').style.display='block'; }
-
-  // Login flow
-  document.getElementById('loginBtn').addEventListener('click', ()=> {
-    const p = prompt('Enter staff password:');
-    if(p && p === STAFF_PASSWORD){
-      localStorage.setItem(LOGIN_KEY,'1'); showMain();
-    } else { alert('Incorrect password'); }
-  });
-  document.getElementById('logoutBtn').addEventListener('click', ()=>{ localStorage.removeItem(LOGIN_KEY); hideMain(); });
-
-  // Auto-check login
-  if(localStorage.getItem(LOGIN_KEY) === '1'){ showMain(); } else { hideMain(); }
-
-  // Load today's queue and show editable dropdowns
-  function loadQueue(){
-    const today = new Date().toISOString().split('T')[0];
-    const ref = db.ref("bookings/"+today);
-    ref.on('value', snap=>{
-      const tbody = document.getElementById('adminQueue'); tbody.innerHTML='';
-      if(!snap.exists()){ tbody.innerHTML = '<tr><td colspan="6" style="padding:18px;color:#666">No bookings today.</td></tr>'; return; }
-      const data = snap.val();
-      Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial)).forEach(item=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${item.serial}</td>
-                        <td>${item.datetime}</td>
-                        <td>${item.name}</td>
-                        <td>${item.contact}</td>
-                        <td>
-                          <select onchange="updateField('${today}','${item.serial}','paymentStatus',this.value)">
-                            <option ${item.paymentStatus==='Pending'?'selected':''}>Pending</option>
-                            <option ${item.paymentStatus==='Done'?'selected':''}>Done</option>
-                          </select>
-                        </td>
-                        <td>
-                          <select onchange="updateField('${today}','${item.serial}','serviceStatus',this.value)">
-                            <option ${item.serviceStatus==='Waiting'?'selected':''}>Waiting</option>
-                            <option ${item.serviceStatus==='Serving'?'selected':''}>Serving</option>
-                            <option ${item.serviceStatus==='Done'?'selected':''}>Done</option>
-                          </select>
-                        </td>`;
-        tbody.appendChild(tr);
+  // Login
+  function login(){
+    const email=document.getElementById('loginEmail').value;
+    const pass=document.getElementById('loginPass').value;
+    firebase.auth().signInWithEmailAndPassword(email,pass)
+      .then(()=>{
+        document.getElementById('loginBox').style.display='none';
+        document.getElementById('adminPanel').style.display='block';
+        loadQueue();
+      })
+      .catch(err=>{
+        document.getElementById('loginMsg').innerText=err.message;
       });
-    }, err => { console.error('admin load err', err); });
   }
 
-  // Expose updateField to inline handlers
-  window.updateField = function(date,serial,field,val){
-    try{
-      db.ref("bookings/"+date+"/"+serial+"/"+field).set(val);
-    }catch(e){ console.error(e); alert('Update failed'); }
-  };
+  // Logout
+  function logout(){
+    firebase.auth().signOut().then(()=>{
+      document.getElementById('loginBox').style.display='block';
+      document.getElementById('adminPanel').style.display='none';
+    });
+  }
+
+  // Load queue
+  function loadQueue(){
+    const today=new Date().toISOString().split("T")[0];
+    db.ref("bookings/"+today).on("value",snap=>{
+      const data=snap.val()||{};
+      const tbody=document.getElementById("queueTable");
+      tbody.innerHTML="";
+      Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial)).forEach(item=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
+          <td>${item.serial}</td>
+          <td>${item.datetime}</td>
+          <td>${item.name}</td>
+          <td>${item.contact}</td>
+          <td>
+            <select onchange="updateField('${today}','${item.serial}','paymentStatus',this.value)">
+              <option ${item.paymentStatus=="Pending"?"selected":""}>Pending</option>
+              <option ${item.paymentStatus=="Done"?"selected":""}>Done</option>
+            </select>
+          </td>
+          <td>
+            <select onchange="updateField('${today}','${item.serial}','serviceStatus',this.value)">
+              <option ${item.serviceStatus=="Waiting"?"selected":""}>Waiting</option>
+              <option ${item.serviceStatus=="Serving"?"selected":""}>Serving</option>
+              <option ${item.serviceStatus=="Done"?"selected":""}>Done</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  }
+
+  // Update
+  function updateField(date,serial,field,val){
+    db.ref("bookings/"+date+"/"+serial+"/"+field).set(val);
+  }
 </script>
 </body>
 </html>
