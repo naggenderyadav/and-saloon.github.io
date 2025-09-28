@@ -17,8 +17,6 @@
     .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(20,30,50,0.08);margin-bottom:18px}
     label{display:block;margin:12px 0 6px;font-weight:600}
     input{width:100%;padding:12px;border-radius:8px;border:1px solid #e6e9ef;font-size:1rem}
-    .row{display:flex;gap:12px}
-    .small{flex:1}
     .actions{display:flex;gap:12px;margin-top:14px}
     .btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
     .btn.ghost{background:#fff;color:var(--deep);border:1px solid #e6e9ef}
@@ -27,7 +25,6 @@
     th,td{padding:10px;border:1px solid #eef2f7;text-align:center;font-size:0.95rem}
     th{background:var(--deep);color:#fff}
     footer{text-align:center;padding:18px;color:#fff;background:#25364d;border-top:1px solid rgba(255,255,255,0.03)}
-    @media(max-width:640px){header h1{font-size:1.4rem}}
   </style>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -42,8 +39,8 @@
 
   <div class="container">
     <!-- Booking card -->
-    <div class="card" aria-labelledby="book-title">
-      <h2 id="book-title">📌 Book Your Slot</h2>
+    <div class="card">
+      <h2>📌 Book Your Slot</h2>
       <label for="custName">Name</label>
       <input id="custName" placeholder="Enter your name" />
       <label for="custPhone">Contact</label>
@@ -51,18 +48,17 @@
       <p style="margin-top:12px;color:var(--muted)">Booking Fee: <strong>₹50</strong> (adjustable in final bill)</p>
 
       <div class="actions">
-        <!-- UPI link opens UPI apps on mobile -->
         <a id="upiLink" class="btn" href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">💳 Pay ₹50 via UPI</a>
         <button class="btn ghost" id="confirmBtn">📅 Confirm Booking</button>
       </div>
 
-      <p id="msg" class="msg" role="status" aria-live="polite"></p>
+      <p id="msg" class="msg"></p>
     </div>
 
-    <!-- Queue preview (read-only) -->
+    <!-- Queue preview -->
     <div class="card">
-      <h3>📋 Today’s Queue (Preview)</h3>
-      <table aria-label="Today queue">
+      <h3>📋 Today’s Queue</h3>
+      <table>
         <thead>
           <tr><th>Serial</th><th>Date & Time</th><th>Name</th><th>Contact</th><th>Payment</th><th>Status</th></tr>
         </thead>
@@ -70,14 +66,14 @@
           <tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>
         </tbody>
       </table>
-      <p style="margin-top:10px;color:var(--muted);font-size:0.9rem">Note: To manage status (payment/service), staff should use the staff panel (not available to public).</p>
+      <p style="margin-top:10px;color:var(--muted);font-size:0.9rem">* Status updates are managed by staff panel only.</p>
     </div>
   </div>
 
   <footer>© 2025 A & D Unisex Salon</footer>
 
 <script>
-  // ---------- Firebase config (replace if needed) ----------
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
     authDomain: "and-unisex-salon.firebaseapp.com",
@@ -90,27 +86,26 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Utils
-  function setMsg(text,color='black'){ const el=document.getElementById('msg'); el.textContent=text; el.style.color=color; }
-
-  async function getNextSerial(date){
-    try{
-      const snap = await db.ref("bookings/"+date).once("value");
-      const count = snap.exists()? snap.numChildren(): 0;
-      return String(count+1).padStart(3,'0');
-    }catch(e){
-      console.error('serial error',e); return '001';
-    }
+  function setMsg(text,color='black'){ 
+    const el=document.getElementById('msg'); 
+    el.textContent=text; 
+    el.style.color=color; 
   }
 
-  // Confirm booking handler
-  document.getElementById('confirmBtn').addEventListener('click', async function(){
-    setMsg('','black');
+  async function getNextSerial(date){
+    const snap = await db.ref("bookings/"+date).once("value");
+    const count = snap.exists()? snap.numChildren(): 0;
+    return String(count+1).padStart(3,'0');
+  }
+
+  // Booking
+  document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+    setMsg('');
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
 
-    if(!name || !phone){ setMsg('⚠️ Please fill all fields', 'crimson'); return; }
-    if(!/^\d{10}$/.test(phone)){ setMsg('⚠️ Enter a valid 10-digit phone number', 'crimson'); return; }
+    if(!name || !phone){ setMsg('⚠️ Please fill all fields','crimson'); return; }
+    if(!/^\d{10}$/.test(phone)){ setMsg('⚠️ Enter valid 10-digit phone','crimson'); return; }
 
     try{
       const now = new Date();
@@ -119,159 +114,37 @@
       const serial = await getNextSerial(dateStr);
 
       const entry = {
-        serial,
-        datetime: dateStr + ' ' + timeStr,
-        name,
-        contact: phone,
-        paymentStatus: 'Pending',
-        serviceStatus: 'Waiting'
+        serial, datetime: dateStr+' '+timeStr,
+        name, contact: phone,
+        paymentStatus:'Pending', serviceStatus:'Waiting'
       };
+
       await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
-      setMsg('✅ Booking Confirmed! Your Serial: '+serial, 'green');
-      // reset fields
+      setMsg('✅ Booking Confirmed! Your Serial: '+serial,'green');
       document.getElementById('custName').value='';
       document.getElementById('custPhone').value='';
-    }catch(err){
-      console.error(err);
-      setMsg('❌ Something went wrong. Try again later.', 'crimson');
-    }
+    }catch(err){ console.error(err); setMsg('❌ Error: '+err.message,'crimson'); }
   });
 
-  // Read-only queue preview (safe: shows only)
-  (function loadTodayQueue(){
+  // Queue preview
+  (function(){
     const today = new Date().toISOString().split('T')[0];
-    const ref = db.ref("bookings/"+today);
-    ref.on('value', snap=>{
-      const tbody = document.getElementById('queueTable'); tbody.innerHTML='';
-      if(!snap.exists()){ tbody.innerHTML = '<tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>'; return; }
-      const data = snap.val();
-      // sort by serial
-      const rows = Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial));
+    db.ref("bookings/"+today).on('value', snap=>{
+      const tbody=document.getElementById('queueTable'); tbody.innerHTML='';
+      if(!snap.exists()){ tbody.innerHTML='<tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>'; return; }
+      const rows = Object.values(snap.val()).sort((a,b)=>a.serial.localeCompare(b.serial));
       rows.forEach(item=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${item.serial}</td>
-                        <td>${item.datetime}</td>
-                        <td>${item.name}</td>
-                        <td>${item.contact}</td>
-                        <td>${item.paymentStatus}</td>
-                        <td>${item.serviceStatus}</td>`;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${item.serial}</td>
+                      <td>${item.datetime}</td>
+                      <td>${item.name}</td>
+                      <td>${item.contact}</td>
+                      <td>${item.paymentStatus}</td>
+                      <td>${item.serviceStatus}</td>`;
         tbody.appendChild(tr);
       });
-    }, err => { console.error('queue load err', err); });
+    });
   })();
-</script>
-</body>
-</html>    const msg=document.getElementById("msg");
-
-    if(!name||!phone){
-      msg.innerText="⚠️ Please fill all fields";
-      msg.style.color="red";return;
-    }
-
-    try{
-      const date=new Date();
-      const dateStr=date.toISOString().split("T")[0];
-      const timeStr=date.toLocaleTimeString();
-      const serial=await getNextSerial(dateStr);
-
-      const entry={
-        serial:serial,
-        datetime:dateStr+" "+timeStr,
-        name:name,
-        contact:phone,
-        paymentStatus:"Pending",
-        serviceStatus:"Waiting"
-      };
-      await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
-
-      msg.innerText="✅ Booking Confirmed! Your Serial: "+serial;
-      msg.style.color="green";
-      document.getElementById("custName").value="";
-      document.getElementById("custPhone").value="";
-    }catch(err){
-      console.error(err);
-      msg.innerText="❌ Error: "+err.message;
-      msg.style.color="red";
-    }
-  }
-
-  // Queue
-  const today=new Date().toISOString().split("T")[0];
-  db.ref("bookings/"+today).on("value",snap=>{
-    const data=snap.val()||{};
-    const tbody=document.getElementById("queueTable");
-    tbody.innerHTML="";
-    Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial)).forEach(item=>{
-      const tr=document.createElement("tr");
-      tr.innerHTML=`
-        <td>${item.serial}</td>
-        <td>${item.datetime}</td>
-        <td>${item.name}</td>
-        <td>${item.contact}</td>
-        <td>
-          <select onchange="updateField('${today}','${item.serial}','paymentStatus',this.value)">
-            <option ${item.paymentStatus=="Pending"?"selected":""}>Pending</option>
-            <option ${item.paymentStatus=="Done"?"selected":""}>Done</option>
-          </select>
-        </td>
-        <td>
-          <select onchange="updateField('${today}','${item.serial}','serviceStatus',this.value)">
-            <option ${item.serviceStatus=="Waiting"?"selected":""}>Waiting</option>
-            <option ${item.serviceStatus=="Serving"?"selected":""}>Serving</option>
-            <option ${item.serviceStatus=="Done"?"selected":""}>Done</option>
-          </select>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  });
-
-  // Update field
-  function updateField(date,serial,field,val){
-    db.ref("bookings/"+date+"/"+serial+"/"+field).set(val);
-  }
-</script>
-</body>
-</html>      msg.innerText="❌ Error: "+err.message;
-      msg.style.color="red";
-    }
-  }
-
-  // Display Queue
-  const today=new Date().toISOString().split("T")[0];
-  db.ref("bookings/"+today).on("value",snap=>{
-    const data=snap.val()||{};
-    const tbody=document.getElementById("queueTable");
-    tbody.innerHTML="";
-    Object.values(data).sort((a,b)=>a.serial.localeCompare(b.serial)).forEach(item=>{
-      const tr=document.createElement("tr");
-      tr.innerHTML=`
-        <td>${item.serial}</td>
-        <td>${item.datetime}</td>
-        <td>${item.name}</td>
-        <td>${item.contact}</td>
-        <td>
-          <select onchange="updateField('${today}','${item.serial}','paymentStatus',this.value)">
-            <option ${item.paymentStatus=="Pending"?"selected":""}>Pending</option>
-            <option ${item.paymentStatus=="Done"?"selected":""}>Done</option>
-          </select>
-        </td>
-        <td>
-          <select onchange="updateField('${today}','${item.serial}','serviceStatus',this.value)">
-            <option ${item.serviceStatus=="Waiting"?"selected":""}>Waiting</option>
-            <option ${item.serviceStatus=="Serving"?"selected":""}>Serving</option>
-            <option ${item.serviceStatus=="Done"?"selected":""}>Done</option>
-          </select>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  });
-
-  // Staff updates field
-  function updateField(date,serial,field,val){
-    db.ref("bookings/"+date+"/"+serial+"/"+field).set(val);
-  }
 </script>
 </body>
 </html>
