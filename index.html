@@ -1,150 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>A & D Unisex Salon - Book</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A & D Unisex Salon - Booking</title>
   <style>
-    :root{
-      --bg:#f6f7fb; --deep:#1f3b73; --accent:#d4af37; --card:#ffffff;
-      --muted:#6b7280;
-    }
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#13253a;}
-    header{background:linear-gradient(135deg,var(--deep),#2c3e50);color:#fff;padding:40px 20px;text-align:center;}
-    header h1{font-size:1.8rem;margin-bottom:6px}
-    header p{margin:0;opacity:0.95}
-    .container{max-width:980px;margin:24px auto;padding:0 16px}
-    .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(20,30,50,0.08);margin-bottom:18px}
-    label{display:block;margin:12px 0 6px;font-weight:600}
-    input{width:100%;padding:12px;border-radius:8px;border:1px solid #e6e9ef;font-size:1rem}
-    .actions{display:flex;gap:12px;margin-top:14px}
-    .btn{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
-    .btn.ghost{background:#fff;color:var(--deep);border:1px solid #e6e9ef}
-    .msg{margin-top:12px;font-weight:700}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{padding:10px;border:1px solid #eef2f7;text-align:center;font-size:0.95rem}
-    th{background:var(--deep);color:#fff}
-    footer{text-align:center;padding:18px;color:#fff;background:#25364d;border-top:1px solid rgba(255,255,255,0.03)}
+    body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}
+    header{background:#2c3e50;color:#fff;padding:20px;text-align:center;}
+    .container{max-width:900px;margin:auto;padding:20px;}
+    .card{background:#fff;padding:20px;margin:15px 0;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);}
+    label{display:block;margin:10px 0 5px;}
+    input{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;}
+    button{margin-top:10px;padding:10px 15px;background:#27ae60;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+    button:hover{background:#219150;}
+    #msg{margin-top:10px;font-weight:bold;}
+    footer{text-align:center;padding:15px;background:#2c3e50;color:white;margin-top:20px;}
   </style>
-  <!-- Firebase -->
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
   <header>
     <h1>✨ A & D Unisex Salon ✨</h1>
-    <p>Experience Luxury Styling — Ankush Padvi & Shakshi Jadhav</p>
-    <p>📞 8329003586 |     ✉️ ankushpadvi555@gmail.com</p>
+    <p>Experience Luxury Styling with Ankush Padvi & Shakshi Jadhav</p>
+    <p>📞 8329003586 | ✉️ ankushpadvi555@gmail.com</p>
   </header>
 
   <div class="container">
-    <!-- Booking card -->
+    <!-- Booking -->
     <div class="card">
       <h2>📌 Book Your Slot</h2>
-      <label for="custName">Name</label>
-      <input id="custName" placeholder="Enter your name" />
-      <label for="custPhone">Contact</label>
-      <input id="custPhone" placeholder="Enter your phone (10 digits)" />
-      <p style="margin-top:12px;color:var(--muted)">Booking Fee: <strong>₹50</strong> (adjustable in final bill)</p>
-
-      <div class="actions">
-        <a id="upiLink" class="btn" href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">💳 Pay ₹50 via UPI</a>
-        <button class="btn ghost" id="confirmBtn">📅 Confirm Booking</button>
-      </div>
-
-      <p id="msg" class="msg"></p>
-    </div>
-
-    <!-- Queue preview -->
-    <div class="card">
-      <h3>📋 Today’s Queue</h3>
-      <table>
-        <thead>
-          <tr><th>Serial</th><th>Date & Time</th><th>Name</th><th>Contact</th><th>Payment</th><th>Status</th></tr>
-        </thead>
-        <tbody id="queueTable">
-          <tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>
-        </tbody>
-      </table>
-      <p style="margin-top:10px;color:var(--muted);font-size:0.9rem">* Status updates are managed by staff panel only.</p>
+      <label>Name</label>
+      <input id="custName" placeholder="Enter your name"/>
+      <label>Contact</label>
+      <input id="custPhone" placeholder="Enter your phone"/>
+      <p>Booking Fee: ₹50 (adjustable in final bill)</p>
+      <a href="upi://pay?pa=9370334319@ybl&pn=A%20%26%20D%20Unisex%20Salon&am=50&cu=INR">
+        <button type="button">💳 Pay ₹50 via UPI</button>
+      </a>
+      <button type="button" onclick="bookSlot()">✅ Confirm Booking</button>
+      <p id="msg"></p>
     </div>
   </div>
 
-  <footer>© 2025 A & D Unisex Salon</footer>
+  <footer>
+    © 2025 A & D Unisex Salon | Designed with ❤️ for our valued clients
+  </footer>
 
-<script>
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
-    authDomain: "and-unisex-salon.firebaseapp.com",
-    databaseURL: "https://and-unisex-salon-default-rtdb.firebaseio.com",
-    projectId: "and-unisex-salon",
-    storageBucket: "and-unisex-salon.appspot.com",
-    messagingSenderId: "369436182781",
-    appId: "1:369436182781:web:893b3b8db919b89bb59694"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
+      authDomain: "and-unisex-salon.firebaseapp.com",
+      databaseURL: "https://and-unisex-salon-default-rtdb.firebaseio.com",
+      projectId: "and-unisex-salon",
+      storageBucket: "and-unisex-salon.appspot.com",
+      messagingSenderId: "369436182781",
+      appId: "1:369436182781:web:893b3b8db919b89bb59694",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  function setMsg(text,color='black'){ 
-    const el=document.getElementById('msg'); 
-    el.textContent=text; 
-    el.style.color=color; 
-  }
+    async function getNextSerial(date){
+      const snap = await db.ref("bookings/"+date).once("value");
+      const count = snap.numChildren();
+      return String(count+1).padStart(3,'0');
+    }
 
-  async function getNextSerial(date){
-    const snap = await db.ref("bookings/"+date).once("value");
-    const count = snap.exists()? snap.numChildren(): 0;
-    return String(count+1).padStart(3,'0');
-  }
+    async function bookSlot(){
+      const name=document.getElementById("custName").value.trim();
+      const phone=document.getElementById("custPhone").value.trim();
+      const msg=document.getElementById("msg");
 
-  // Booking
-  document.getElementById('confirmBtn').addEventListener('click', async ()=>{
-    setMsg('');
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
+      if(!name || !phone){
+        msg.innerText="⚠️ Please fill all fields";
+        msg.style.color="red";
+        return;
+      }
 
-    if(!name || !phone){ setMsg('⚠️ Please fill all fields','crimson'); return; }
-    if(!/^\d{10}$/.test(phone)){ setMsg('⚠️ Enter valid 10-digit phone','crimson'); return; }
+      try {
+        const date=new Date();
+        const dateStr=date.toISOString().split("T")[0];
+        const timeStr=date.toLocaleTimeString();
+        const serial=await getNextSerial(dateStr);
 
-    try{
-      const now = new Date();
-      const dateStr = now.toISOString().split('T')[0];
-      const timeStr = now.toLocaleTimeString();
-      const serial = await getNextSerial(dateStr);
+        const entry={
+          serial:serial,
+          datetime:dateStr+" "+timeStr,
+          name:name,
+          contact:phone,
+          paymentStatus:"Pending",
+          serviceStatus:"Waiting"
+        };
 
-      const entry = {
-        serial, datetime: dateStr+' '+timeStr,
-        name, contact: phone,
-        paymentStatus:'Pending', serviceStatus:'Waiting'
-      };
+        await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
 
-      await db.ref("bookings/"+dateStr+"/"+serial).set(entry);
-      setMsg('✅ Booking Confirmed! Your Serial: '+serial,'green');
-      document.getElementById('custName').value='';
-      document.getElementById('custPhone').value='';
-    }catch(err){ console.error(err); setMsg('❌ Error: '+err.message,'crimson'); }
-  });
+        msg.innerText="✅ Booking Done! Your Serial: "+serial;
+        msg.style.color="green";
 
-  // Queue preview
-  (function(){
-    const today = new Date().toISOString().split('T')[0];
-    db.ref("bookings/"+today).on('value', snap=>{
-      const tbody=document.getElementById('queueTable'); tbody.innerHTML='';
-      if(!snap.exists()){ tbody.innerHTML='<tr><td colspan="6" style="padding:24px;color:var(--muted)">No bookings yet.</td></tr>'; return; }
-      const rows = Object.values(snap.val()).sort((a,b)=>a.serial.localeCompare(b.serial));
-      rows.forEach(item=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${item.serial}</td>
-                      <td>${item.datetime}</td>
-                      <td>${item.name}</td>
-                      <td>${item.contact}</td>
-                      <td>${item.paymentStatus}</td>
-                      <td>${item.serviceStatus}</td>`;
-        tbody.appendChild(tr);
-      });
-    });
-  })();
-</script>
+        document.getElementById("custName").value="";
+        document.getElementById("custPhone").value="";
+      } catch(err){
+        msg.innerText="❌ Error: "+err.message;
+        msg.style.color="red";
+        console.error(err);
+      }
+    }
+  </script>
 </body>
 </html>
