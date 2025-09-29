@@ -3,45 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Panel - AND Unisex Salon</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    .login-box, .logout-box, .booking-list { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    input, button { padding: 10px; margin: 5px 0; width: 100%; }
-    .booking-card { padding: 15px; margin-bottom: 10px; border-radius: 8px; background: #f9f9f9; border: 1px solid #ddd; }
+    body { background: #f8f9fa; }
+    .login-box { max-width: 400px; margin: 100px auto; }
+    .booking-card { margin-bottom: 15px; }
     .status { font-weight: bold; }
     .confirmed { color: green; }
     .canceled { color: red; }
   </style>
 </head>
 <body>
-  <h2>Admin Panel - AND Unisex Salon</h2>
 
-  <!-- Login Box -->
-  <div class="login-box" id="loginBox">
-    <h3>Admin Login</h3>
-    <input type="email" id="adminEmail" placeholder="Email" value="freelancerdeep26@gmail.com">
-    <input type="password" id="adminPassword" placeholder="Password" value="Andsalon@123">
-    <button onclick="login()">Login</button>
-    <p id="loginError" style="color:red;"></p>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="navbar" style="display:none;">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">AND Salon Admin</a>
+      <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Login Form -->
+  <div class="login-box card shadow" id="loginBox">
+    <div class="card-body">
+      <h3 class="card-title text-center mb-3">Admin Login</h3>
+      <div class="mb-3">
+        <label>Email</label>
+        <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email">
+      </div>
+      <div class="mb-3">
+        <label>Password</label>
+        <input type="password" id="adminPassword" class="form-control" placeholder="Enter password">
+      </div>
+      <button class="btn btn-primary w-100" onclick="login()">Login</button>
+      <p id="loginError" class="text-danger mt-2"></p>
+    </div>
   </div>
 
-  <!-- Logout Box -->
-  <div class="logout-box" id="logoutBox" style="display:none;">
-    <p>Welcome, <span id="adminUser"></span></p>
-    <button onclick="logout()">Logout</button>
-  </div>
-
-  <!-- Booking List -->
-  <div class="booking-list" id="bookingList" style="display:none;">
-    <h3>All Bookings</h3>
+  <!-- Dashboard -->
+  <div class="container mt-4" id="dashboard" style="display:none;">
+    <h2 class="mb-4">Bookings Dashboard</h2>
     <div id="bookings"></div>
   </div>
 
   <script>
-    // ✅ Firebase Config (Fixed)
+    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAQJuNHQBu8OHmmz2DPVSSkv9Mj_l3im_g",
       authDomain: "and-unisex-salon.firebaseapp.com",
@@ -53,9 +68,7 @@
       measurementId: "G-F9GDHMDZYG"
     };
 
-    // ✅ Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-
     const auth = firebase.auth();
     const db = firebase.database();
 
@@ -64,11 +77,10 @@
       const email = document.getElementById("adminEmail").value;
       const password = document.getElementById("adminPassword").value;
       auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
+        .then(() => {
           document.getElementById("loginBox").style.display = "none";
-          document.getElementById("logoutBox").style.display = "block";
-          document.getElementById("bookingList").style.display = "block";
-          document.getElementById("adminUser").innerText = userCredential.user.email;
+          document.getElementById("navbar").style.display = "block";
+          document.getElementById("dashboard").style.display = "block";
           loadBookings();
         })
         .catch((error) => {
@@ -80,12 +92,12 @@
     function logout() {
       auth.signOut().then(() => {
         document.getElementById("loginBox").style.display = "block";
-        document.getElementById("logoutBox").style.display = "none";
-        document.getElementById("bookingList").style.display = "none";
+        document.getElementById("navbar").style.display = "none";
+        document.getElementById("dashboard").style.display = "none";
       });
     }
 
-    // Load Bookings
+    // Load bookings
     function loadBookings() {
       const bookingsDiv = document.getElementById("bookings");
       db.ref("bookings").on("value", (snapshot) => {
@@ -98,32 +110,31 @@
           if (booking.status === "Confirmed") statusClass = "confirmed";
           else if (booking.status === "Canceled") statusClass = "canceled";
 
-          const div = document.createElement("div");
-          div.className = "booking-card";
-          div.innerHTML = `
-            <p><strong>Name:</strong> ${booking.name}</p>
-            <p><strong>Phone:</strong> ${booking.phone}</p>
-            <p><strong>Date:</strong> ${booking.date || "N/A"}</p>
-            <p><strong>Time:</strong> ${booking.time || "N/A"}</p>
-            <p><strong>Status:</strong> <span class="status ${statusClass}">${booking.status || "Pending"}</span></p>
-            <button onclick="updateStatus('${id}', 'Confirmed')">Confirm</button>
-            <button onclick="updateStatus('${id}', 'Canceled')">Cancel</button>
+          const card = document.createElement("div");
+          card.className = "card booking-card shadow-sm";
+          card.innerHTML = `
+            <div class="card-body">
+              <h5 class="card-title">${booking.name || "Unknown"}</h5>
+              <p class="card-text">
+                <strong>Phone:</strong> ${booking.phone || "N/A"}<br>
+                <strong>Date:</strong> ${booking.date || "N/A"}<br>
+                <strong>Time:</strong> ${booking.time || "N/A"}<br>
+                <strong>Status:</strong> <span class="status ${statusClass}">${booking.status || "Pending"}</span>
+              </p>
+              <button class="btn btn-success btn-sm" onclick="updateStatus('${id}', 'Confirmed')">Confirm</button>
+              <button class="btn btn-danger btn-sm" onclick="updateStatus('${id}', 'Canceled')">Cancel</button>
+            </div>
           `;
-          bookingsDiv.appendChild(div);
+          bookingsDiv.appendChild(card);
         });
       });
     }
 
-    // Update Booking Status
+    // Update status
     function updateStatus(id, status) {
       db.ref("bookings/" + id).update({ status: status });
     }
   </script>
-</body>
-</html>  // ✅ Update Booking Status
-  function updateStatus(id, status) {
-    db.ref("bookings/" + id).update({ status: status });
-  }
-</script>
+
 </body>
 </html>
