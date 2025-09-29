@@ -97,42 +97,46 @@
       });
     }
 
-    // Load bookings
+    // Load bookings from nested structure
     function loadBookings() {
       const bookingsDiv = document.getElementById("bookings");
       db.ref("bookings").on("value", (snapshot) => {
         bookingsDiv.innerHTML = "";
-        snapshot.forEach((childSnapshot) => {
-          const booking = childSnapshot.val();
-          const id = childSnapshot.key;
+        snapshot.forEach((dateSnap) => {
+          const dateKey = dateSnap.key;
+          dateSnap.forEach((bookingSnap) => {
+            const booking = bookingSnap.val();
+            const idPath = "bookings/" + dateKey + "/" + bookingSnap.key;
 
-          let statusClass = "";
-          if (booking.status === "Confirmed") statusClass = "confirmed";
-          else if (booking.status === "Canceled") statusClass = "canceled";
+            let statusClass = "";
+            if (booking.serviceStatus === "Confirmed") statusClass = "confirmed";
+            else if (booking.serviceStatus === "Canceled") statusClass = "canceled";
 
-          const card = document.createElement("div");
-          card.className = "card booking-card shadow-sm";
-          card.innerHTML = `
-            <div class="card-body">
-              <h5 class="card-title">${booking.name || "Unknown"}</h5>
-              <p class="card-text">
-                <strong>Phone:</strong> ${booking.phone || "N/A"}<br>
-                <strong>Date:</strong> ${booking.date || "N/A"}<br>
-                <strong>Time:</strong> ${booking.time || "N/A"}<br>
-                <strong>Status:</strong> <span class="status ${statusClass}">${booking.status || "Pending"}</span>
-              </p>
-              <button class="btn btn-success btn-sm" onclick="updateStatus('${id}', 'Confirmed')">Confirm</button>
-              <button class="btn btn-danger btn-sm" onclick="updateStatus('${id}', 'Canceled')">Cancel</button>
-            </div>
-          `;
-          bookingsDiv.appendChild(card);
+            const card = document.createElement("div");
+            card.className = "card booking-card shadow-sm";
+            card.innerHTML = `
+              <div class="card-body">
+                <h5 class="card-title">${booking.name || "Unknown"}</h5>
+                <p class="card-text">
+                  <strong>Phone:</strong> ${booking.contact || "N/A"}<br>
+                  <strong>Date & Time:</strong> ${booking.datetime || "N/A"}<br>
+                  <strong>Serial:</strong> ${booking.serial || "N/A"}<br>
+                  <strong>Payment:</strong> ${booking.paymentStatus || "Pending"}<br>
+                  <strong>Status:</strong> <span class="status ${statusClass}">${booking.serviceStatus || "Waiting"}</span>
+                </p>
+                <button class="btn btn-success btn-sm" onclick="updateStatus('${idPath}', 'Confirmed')">Confirm</button>
+                <button class="btn btn-danger btn-sm" onclick="updateStatus('${idPath}', 'Canceled')">Cancel</button>
+              </div>
+            `;
+            bookingsDiv.appendChild(card);
+          });
         });
       });
     }
 
-    // Update status
-    function updateStatus(id, status) {
-      db.ref("bookings/" + id).update({ status: status });
+    // Update service status
+    function updateStatus(path, status) {
+      db.ref(path).update({ serviceStatus: status });
     }
   </script>
 
