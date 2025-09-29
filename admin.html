@@ -1,147 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>A & D Unisex Salon</title>
+  <meta charset="UTF-8">
+  <title>A & D Salon - Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background: #f8f9fa; }
-    header { background: linear-gradient(90deg, #003366, #0055a5); color: white; padding: 15px; text-align: center; }
-    header h1 { font-size: 1.5rem; margin: 0; }
-    .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    footer { background: #003366; color: white; text-align: center; padding: 10px; margin-top: 20px; }
-    .btn-upi { background: #ff9800; color: white; }
-    .btn-upi:hover { background: #e68900; }
-  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
-<body>
+<body class="bg-light">
 
-  <!-- Header -->
-  <header>
-    <h1>✨ A & D Unisex Salon ✨</h1>
-    <p>Experience Luxury Styling — Ankush Padvi & Shakshi Jadhav</p>
-    <p>📞 8329003586 | 📧 ankushpadvi555@gmail.com</p>
-  </header>
+  <div class="container py-4">
+    <h2 class="text-center mb-4">🔑 A & D Salon - Admin Panel</h2>
 
-  <div class="container my-4">
-    <!-- Booking Form -->
-    <div class="card p-4 mb-4">
-      <h3>📌 Book Your Slot</h3>
-      <div class="mb-3">
-        <label class="form-label">Name</label>
-        <input type="text" id="name" class="form-control" placeholder="Enter your name">
+    <!-- Queue Table -->
+    <div class="card shadow">
+      <div class="card-body">
+        <h5 class="card-title">📋 Manage Today's Queue</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center" id="queueTable">
+            <thead class="table-dark">
+              <tr>
+                <th>Serial</th>
+                <th>Date & Time</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Update</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button id="logoutBtn" class="btn btn-warning mt-3">Logout</button>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Contact</label>
-        <input type="text" id="contact" class="form-control" placeholder="Enter contact number">
-      </div>
-      <p>Booking Fee: <b>₹50</b> (adjustable in final bill)</p>
-      <button class="btn btn-upi mb-2">💳 Pay ₹50 via UPI</button>
-      <button id="confirmBooking" class="btn btn-primary">✅ Confirm Booking</button>
-    </div>
-
-    <!-- Queue -->
-    <div class="card p-4">
-      <h3>🗒️ Today’s Queue</h3>
-      <table class="table table-bordered table-striped mt-3">
-        <thead class="table-dark">
-          <tr>
-            <th>Serial</th>
-            <th>Date & Time</th>
-            <th>Name</th>
-            <th>Contact</th>
-            <th>Payment</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="queueTable">
-          <tr><td colspan="6" class="text-center">No bookings yet.</td></tr>
-        </tbody>
-      </table>
-      <p><i>* Status updates are managed by staff panel only.</i></p>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer>
-    © 2025 A & D Unisex Salon
-  </footer>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
   <script>
-    // 🔑 Firebase Config (replace YOUR_API_KEY with actual values from Firebase Console)
+    // ✅ Firebase Config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "and-unisex-salon.firebaseapp.com",
-      databaseURL: "https://and-unisex-salon-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "and-unisex-salon",
-      storageBucket: "and-unisex-salon.appspot.com",
-      messagingSenderId: "XXXXXXXXXXXX",
-      appId: "XXXXXXXXXXXX"
+      databaseURL: "https://and-unisex-salon-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Confirm Booking
-    document.getElementById("confirmBooking").addEventListener("click", function () {
-      const name = document.getElementById("name").value.trim();
-      const contact = document.getElementById("contact").value.trim();
+    const queueTableBody = document.querySelector("#queueTable tbody");
 
-      if (name && contact) {
-        const bookingRef = db.ref("bookings");
+    // ✅ Load Data in Realtime
+    db.ref("bookings").on("value", (snapshot) => {
+      queueTableBody.innerHTML = "";
+      let serial = 1;
 
-        bookingRef.push({
-          name: name,
-          contact: contact,
-          payment: "₹50",
-          status: "Pending",
-          timestamp: new Date().toLocaleString()
-        })
-        .then(() => {
-          alert("✅ Booking Confirmed!");
-          document.getElementById("name").value = "";
-          document.getElementById("contact").value = "";
-        })
-        .catch((error) => {
-          console.error("❌ Error saving booking:", error);
-          alert("Booking failed. Check console.");
-        });
+      snapshot.forEach(childSnapshot => {
+        const data = childSnapshot.val();
+        const id = childSnapshot.key;
 
-      } else {
-        alert("⚠️ Please fill in all fields.");
-      }
-    });
-
-    // Live Queue Update
-    const queueTable = document.getElementById("queueTable");
-    const bookingRef = db.ref("bookings");
-
-    bookingRef.on("value", (snapshot) => {
-      queueTable.innerHTML = "";
-      let count = 1;
-      snapshot.forEach((childSnapshot) => {
-        const booking = childSnapshot.val();
         const row = `
           <tr>
-            <td>${count++}</td>
-            <td>${booking.timestamp}</td>
-            <td>${booking.name}</td>
-            <td>${booking.contact}</td>
-            <td>${booking.payment}</td>
-            <td>${booking.status}</td>
+            <td>${serial++}</td>
+            <td>${data.dateTime || ""}</td>
+            <td>${data.name || ""}</td>
+            <td>${data.contact || ""}</td>
+            <td>₹${data.payment || "0"}</td>
+            <td>${data.status || "Pending"}</td>
+            <td>
+              <button class="btn btn-success btn-sm" onclick="updateStatus('${id}','Confirmed')">Confirm</button>
+              <button class="btn btn-danger btn-sm" onclick="updateStatus('${id}','Cancelled')">Cancel</button>
+            </td>
           </tr>
         `;
-        queueTable.innerHTML += row;
+        queueTableBody.innerHTML += row;
       });
-      if (count === 1) {
-        queueTable.innerHTML = `<tr><td colspan="6" class="text-center">No bookings yet.</td></tr>`;
-      }
+    });
+
+    // ✅ Update Booking Status
+    function updateStatus(id, status) {
+      db.ref("bookings/" + id).update({ status: status });
+      alert("Status updated to " + status);
+    }
+
+    // ✅ Logout Button
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      window.location.href = "index.html";
     });
   </script>
 </body>
