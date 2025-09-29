@@ -10,45 +10,78 @@
 </head>
 <body class="bg-light">
 
-  <div class="container py-4">
-    <h2 class="text-center mb-4">🔑 A & D Salon - Admin Panel</h2>
+<div class="container py-4">
+  <h2 class="text-center mb-4">🔑 A & D Salon - Admin Panel</h2>
 
-    <!-- Queue Table -->
-    <div class="card shadow">
-      <div class="card-body">
-        <h5 class="card-title">📋 Manage Today's Queue</h5>
-        <div class="table-responsive">
-          <table class="table table-bordered text-center" id="queueTable">
-            <thead class="table-dark">
-              <tr>
-                <th>Serial</th>
-                <th>Date & Time</th>
-                <th>Name</th>
-                <th>Contact</th>
-                <th>Payment</th>
-                <th>Status</th>
-                <th>Update</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <button id="logoutBtn" class="btn btn-warning mt-3">Logout</button>
-      </div>
+  <!-- ✅ Login Form -->
+  <div id="loginSection" class="card shadow mx-auto" style="max-width: 400px;">
+    <div class="card-body">
+      <h5 class="card-title text-center">Admin Login</h5>
+      <input type="password" id="adminPass" class="form-control mb-3" placeholder="Enter Admin PIN">
+      <button id="loginBtn" class="btn btn-primary w-100">Login</button>
     </div>
   </div>
 
-  <script>
-    // ✅ Firebase Config
-    const firebaseConfig = {
-      databaseURL: "https://and-unisex-salon-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  <!-- ✅ Queue Table (hidden until login) -->
+  <div id="adminSection" class="card shadow d-none">
+    <div class="card-body">
+      <h5 class="card-title">📋 Manage Today's Queue</h5>
+      <div class="table-responsive">
+        <table class="table table-bordered text-center" id="queueTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Serial</th>
+              <th>Date & Time</th>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Update</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="logoutBtn" class="btn btn-warning mt-3">Logout</button>
+    </div>
+  </div>
+</div>
 
-    const queueTableBody = document.querySelector("#queueTable tbody");
+<script>
+  // ✅ Firebase Config
+  const firebaseConfig = {
+    databaseURL: "https://and-unisex-salon-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    // ✅ Load Data in Realtime
+  const loginSection = document.getElementById("loginSection");
+  const adminSection = document.getElementById("adminSection");
+  const queueTableBody = document.querySelector("#queueTable tbody");
+
+  const ADMIN_PIN = "1234"; // 🔑 Apna secret PIN yahan set karo
+
+  // ✅ Admin Login
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    const enteredPin = document.getElementById("adminPass").value;
+    if (enteredPin === ADMIN_PIN) {
+      loginSection.classList.add("d-none");
+      adminSection.classList.remove("d-none");
+      loadQueue();
+    } else {
+      alert("❌ Wrong PIN!");
+    }
+  });
+
+  // ✅ Logout
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    adminSection.classList.add("d-none");
+    loginSection.classList.remove("d-none");
+    document.getElementById("adminPass").value = "";
+  });
+
+  // ✅ Load Data in Realtime
+  function loadQueue() {
     db.ref("bookings").on("value", (snapshot) => {
       queueTableBody.innerHTML = "";
       let serial = 1;
@@ -74,17 +107,13 @@
         queueTableBody.innerHTML += row;
       });
     });
+  }
 
-    // ✅ Update Booking Status
-    function updateStatus(id, status) {
-      db.ref("bookings/" + id).update({ status: status });
-      alert("Status updated to " + status);
-    }
-
-    // ✅ Logout Button
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      window.location.href = "index.html";
-    });
-  </script>
+  // ✅ Update Booking Status
+  function updateStatus(id, status) {
+    db.ref("bookings/" + id).update({ status: status });
+    alert("Status updated to " + status);
+  }
+</script>
 </body>
 </html>
